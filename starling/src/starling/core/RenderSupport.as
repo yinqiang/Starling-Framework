@@ -40,9 +40,6 @@ package starling.core
         private var mQuadBatches:Vector.<QuadBatch>;
         private var mCurrentQuadBatchID:int;
         
-        /** Helper object. */
-        private static var sHelperMatrix:Matrix = new Matrix();
-        
         // construction
         
         /** Creates a new RenderSupport object with an empty matrix stack. */
@@ -105,10 +102,16 @@ package starling.core
             MatrixUtil.prependScale(mModelViewMatrix, sx, sy);
         }
         
+        /** Prepends a matrix to the modelview matrix by multiplying it another matrix. */
+        public function prependMatrix(matrix:Matrix):void
+        {
+            MatrixUtil.prependMatrix(mModelViewMatrix, matrix);
+        }
+        
         /** Prepends translation, scale and rotation of an object to the modelview matrix. */
         public function transformMatrix(object:DisplayObject):void
         {
-            transformMatrixForObject(mModelViewMatrix, object);   
+            MatrixUtil.prependMatrix(mModelViewMatrix, object.transformationMatrix);
         }
         
         /** Pushes the current modelview matrix to a stack from which it can be restored later. */
@@ -133,6 +136,12 @@ package starling.core
             loadIdentity();
         }
         
+        /** Prepends translation, scale and rotation of an object to a custom matrix. */
+        public static function transformMatrixForObject(matrix:Matrix, object:DisplayObject):void
+        {
+            MatrixUtil.prependMatrix(matrix, object.transformationMatrix);
+        }
+        
         /** Calculates the product of modelview and projection matrix. 
          *  CAUTION: Don't save a reference to this object! Each call returns the same instance. */
         public function get mvpMatrix():Matrix
@@ -149,13 +158,11 @@ package starling.core
             return MatrixUtil.convertTo3D(mvpMatrix, mMvpMatrix3D);
         }
         
-        /** Prepends translation, scale and rotation of an object to a custom matrix. */
-        public static function transformMatrixForObject(matrix:Matrix, object:DisplayObject):void
-        {
-            sHelperMatrix.copyFrom(object.transformationMatrix);
-            sHelperMatrix.concat(matrix);
-            matrix.copyFrom(sHelperMatrix);
-        }
+        /** Returns the current modelview matrix. CAUTION: not a copy -- use with care! */
+        public function get modelViewMatrix():Matrix { return mModelViewMatrix; }
+        
+        /** Returns the current projection matrix. CAUTION: not a copy -- use with care! */
+        public function get projectionMatrix():Matrix { return mProjectionMatrix; }
         
         // blending
         
