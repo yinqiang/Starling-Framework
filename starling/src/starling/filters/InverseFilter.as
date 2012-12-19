@@ -16,10 +16,14 @@ package starling.filters
     
     import starling.textures.Texture;
 
+    /** This filter is only kept as a sample filter implementation you can learn from. 
+      * It will be removed with the next official Starling release! 
+      * As a replacement, use the 'invert' method in the ColorMatrixFilter. */
     public class InverseFilter extends FragmentFilter
     {
         private var mShaderProgram:Program3D;
         private var mOnes:Vector.<Number> = new <Number>[1.0, 1.0, 1.0, 1.0];
+        private var mMinColor:Vector.<Number> = new <Number>[0, 0, 0, 0.0001];
         
         public function InverseFilter()
         {
@@ -34,11 +38,18 @@ package starling.filters
         
         protected override function createPrograms():void
         {
+            // One might expect that we could just subtract the RGB values from 1, right?
+            // The problem is that the input arrives with premultiplied alpha values, and the
+            // output is expected in the same form. So we first have to restore the original RGB
+            // values, subtract them from one, and then multiply with the original alpha again.
+            
             var fragmentProgramCode:String =
                 "tex ft0, v0, fs0 <2d, clamp, linear, mipnone>  \n" + // read texture color
-                "sub ft1, fc0, ft0  \n" +   // subtract each value from '1'
-                "mov ft1.w, ft0.w   \n" +   // but use original alpha value (w)
-                "mov oc, ft1        \n";    // copy to output
+                "max ft0, ft0, fc1              \n" + // avoid division through zero in next step
+                "div ft0.xyz, ft0.xyz, ft0.www  \n" + // restore original (non-PMA) RGB values
+                "sub ft0.xyz, fc0.xyz, ft0.xyz  \n" + // subtract rgb values from '1'
+                "mul ft0.xyz, ft0.xyz, ft0.www  \n" + // multiply with alpha again (PMA)
+                "mov oc, ft0                    \n";  // copy to output
             
             mShaderProgram = assembleAgal(fragmentProgramCode);
         }
@@ -53,6 +64,7 @@ package starling.filters
             // texture 0:            input texture
             
             context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, mOnes, 1);
+            context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 1, mMinColor, 1);
             context.setProgram(mShaderProgram);
         }
     }

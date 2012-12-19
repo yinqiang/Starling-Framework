@@ -1,12 +1,13 @@
 package 
 {
     import flash.display.Sprite;
-    import flash.display.StageAlign;
-    import flash.display.StageScaleMode;
     import flash.events.Event;
     import flash.system.Capabilities;
     
     import starling.core.Starling;
+    
+    // If you set this class as your 'default application', it will run without a preloader.
+    // To use a preloader, see 'Preloader.as'.
     
     [SWF(width="320", height="480", frameRate="60", backgroundColor="#222222")]
     public class Startup extends Sprite
@@ -15,11 +16,16 @@ package
         
         public function Startup()
         {
-            stage.scaleMode = StageScaleMode.NO_SCALE;
-            stage.align = StageAlign.TOP_LEFT;
+            if (stage) start();
+            else addEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
+        }
+        
+        private function start():void
+        {
+            var isMac:Boolean = Capabilities.manufacturer.indexOf("Macintosh") != -1;
             
-            Starling.multitouchEnabled = true; // useful on mobile devices
-            Starling.handleLostContext = true; // deactivate on mobile devices (to save memory)
+            Starling.multitouchEnabled = true;   // useful on mobile devices
+            Starling.handleLostContext = !isMac; // required on Windows, needs more memory
             
             mStarling = new Starling(Game, stage);
             mStarling.simulateMultitouch = true;
@@ -28,6 +34,12 @@ package
             
             // this event is dispatched when stage3D is set up
             mStarling.stage3D.addEventListener(Event.CONTEXT3D_CREATE, onContextCreated);
+        }
+        
+        private function onAddedToStage(event:Event):void
+        {
+            removeEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
+            start();
         }
         
         private function onContextCreated(event:Event):void

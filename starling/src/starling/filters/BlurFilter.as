@@ -66,19 +66,14 @@ package starling.filters
         
         public override function dispose():void
         {
-            disposePrograms();
-            super.dispose();
-        }
-        
-        private function disposePrograms():void
-        {
             if (mNormalProgram) mNormalProgram.dispose();
             if (mTintedProgram) mTintedProgram.dispose();
+            
+            super.dispose();
         }
         
         protected override function createPrograms():void
         {
-            disposePrograms();
             mNormalProgram = createProgram(false);
             mTintedProgram = createProgram(true);
         }
@@ -125,10 +120,9 @@ package starling.filters
                 "mul ft4, ft4, fc0.zzzz                         \n";   // multiply with weight
 
             if (tinted) fragmentProgramCode +=
-                "add ft5, ft5, ft4                              \n" +  // add to output color
-                "mov ft5.xyz, fc1.xyz                           \n" +  // set color
-                "mul ft5.w, ft5.w, fc1.w                        \n" +  // multiply alpha
-                "mov  oc, ft5                                   \n";   // copy to output 
+                "add ft5, ft5, ft4                              \n" + // add to output color
+                "mul ft5.xyz, fc1.xyz, ft5.www                  \n" + // set rgb with correct alpha
+                "mul oc, ft5, fc1.wwww                          \n";  // multiply alpha
             
             else fragmentProgramCode +=
                 "add  oc, ft5, ft4                              \n";   // add to output color
@@ -233,9 +227,9 @@ package starling.filters
         {
             if (mBlurX == 0 && mBlurY == 0) mBlurX = 0.001;
             
-            numPasses  = Math.ceil(mBlurX) + Math.ceil(mBlurY);
-            marginLeft = marginRight = 4 + Math.ceil(mBlurX);
-            marginTop  = marginBottom = 4 + Math.ceil(mBlurY); 
+            numPasses = Math.ceil(mBlurX) + Math.ceil(mBlurY);
+            marginX = 4 + Math.ceil(mBlurX);
+            marginY = 4 + Math.ceil(mBlurY); 
         }
         
         public function setUniformColor(enable:Boolean, color:uint=0x0, alpha:Number=1.0):void

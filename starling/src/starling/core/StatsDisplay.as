@@ -12,13 +12,13 @@ package starling.core
 {
     import flash.system.System;
     
-    import starling.display.BlendMode;
-    import starling.display.Quad;
+    import starling.display.Image;
     import starling.display.Sprite;
     import starling.events.EnterFrameEvent;
     import starling.events.Event;
     import starling.text.BitmapFont;
     import starling.text.TextField;
+    import starling.textures.Texture;
     import starling.utils.HAlign;
     import starling.utils.VAlign;
     
@@ -26,7 +26,8 @@ package starling.core
      *  the number of draw calls per frame. */
     internal class StatsDisplay extends Sprite
     {
-        private var mBackground:Quad;
+//        private var mBackground:Quad;
+		private var mBackground:Image;
         private var mTextField:TextField;
         
         private var mFrameCount:int = 0;
@@ -36,7 +37,7 @@ package starling.core
         /** Creates a new Statistics Box. */
         public function StatsDisplay()
         {
-            mBackground = new Quad(50, 25, 0x0);
+			mBackground = new Image(Texture.fromColor(50, 25, 0x99000000));
             mTextField = new TextField(48, 25, "", BitmapFont.MINI, BitmapFont.NATIVE_SIZE, 0xffffff);
             mTextField.x = 2;
             mTextField.hAlign = HAlign.LEFT;
@@ -47,7 +48,7 @@ package starling.core
             
             addEventListener(Event.ENTER_FRAME, onEnterFrame);
             updateText(0, getMemory(), 0);
-            blendMode = BlendMode.NONE;
+//            blendMode = BlendMode.NONE;
         }
         
         private function updateText(fps:Number, memory:Number, drawCount:int):void

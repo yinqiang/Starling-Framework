@@ -6,6 +6,7 @@ package
     
     import scenes.AnimationScene;
     import scenes.BenchmarkScene;
+    import scenes.BlendModeScene;
     import scenes.CustomHitTestScene;
     import scenes.FilterScene;
     import scenes.MovieScene;
@@ -22,9 +23,8 @@ package
     import starling.display.Sprite;
     import starling.events.Event;
     import starling.events.KeyboardEvent;
-    import starling.filters.BlurFilter;
-    import starling.filters.GrayscaleFilter;
-    import starling.filters.IdentityFilter;
+    import starling.events.TouchEvent;
+    import starling.events.TouchPhase;
     import starling.text.TextField;
     import starling.textures.Texture;
     import starling.utils.VAlign;
@@ -36,18 +36,9 @@ package
         
         public function Game()
         {
-            // The following settings are for mobile development (iOS, Android):
-            //
-            // You develop your game in a *fixed* coordinate system of 320x480; the game might 
-            // then run on a device with a different resolution, and the assets class will
-            // provide textures in the most suitable format.
+            // load general assets (with correct scale factor, important on mobile)
             
-            Starling.current.stage.stageWidth  = 320;
-            Starling.current.stage.stageHeight = 480;
             Assets.contentScaleFactor = Starling.current.contentScaleFactor;
-            
-            // load general assets
-            
             Assets.prepareSounds();
             Assets.loadBitmapFonts();
             
@@ -61,8 +52,6 @@ package
             addChild(mMainMenu);
             
             var logo:Image = new Image(Assets.getTexture("Logo"));
-            logo.filter = new GrayscaleFilter();
-//            logo.filter.mode = "below";
             mMainMenu.addChild(logo);
             
             var scenesToCreate:Array = [
@@ -72,9 +61,10 @@ package
                 ["Animations", AnimationScene],
                 ["Custom hit-test", CustomHitTestScene],
                 ["Movie Clip", MovieScene],
-                ["Benchmark", BenchmarkScene],
+                ["Filters", FilterScene],
+                ["Blend Modes", BlendModeScene],
                 ["Render Texture", RenderTextureScene],
-                ["Filters", FilterScene]
+                ["Benchmark", BenchmarkScene]
             ];
             
             var buttonTexture:Texture = Assets.getTexture("ButtonBig");
@@ -87,14 +77,13 @@ package
                 
                 var button:Button = new Button(buttonTexture, sceneTitle);
                 button.x = count % 2 == 0 ? 28 : 167;
-                button.y = 180 + int(count / 2) * 52;
+                button.y = 160 + int(count / 2) * 52;
                 button.name = getQualifiedClassName(sceneClass);
-                button.addEventListener(Event.TRIGGERED, onButtonTriggered);
                 mMainMenu.addChild(button);
                 ++count;
             }
             
-            addEventListener(Scene.CLOSING, onSceneClosing);
+            addEventListener(Event.TRIGGERED, onButtonTriggered);
             addEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
             addEventListener(Event.REMOVED_FROM_STAGE, onRemovedFromStage);
             
@@ -105,8 +94,8 @@ package
             infoText.x = 5;
             infoText.y = 475 - infoText.height;
             infoText.vAlign = VAlign.BOTTOM;
-            infoText.touchable = false;
-            mMainMenu.addChild(infoText);
+            infoText.addEventListener(TouchEvent.TOUCH, onInfoTextTouched);
+            mMainMenu.addChildAt(infoText, 0);
         }
         
         private function onAddedToStage(event:Event):void
@@ -127,13 +116,23 @@ package
                 Starling.context.dispose();
         }
         
+        private function onInfoTextTouched(event:TouchEvent):void
+        {
+            if (event.getTouch(this, TouchPhase.ENDED))
+                Starling.current.showStats = !Starling.current.showStats;
+        }
+        
         private function onButtonTriggered(event:Event):void
         {
             var button:Button = event.target as Button;
-            showScene(button.name);
+            
+            if (button.name == "backButton")
+                closeScene();
+            else
+                showScene(button.name);
         }
         
-        private function onSceneClosing(event:Event):void
+        private function closeScene():void
         {
             mCurrentScene.removeFromParent(true);
             mCurrentScene = null;
